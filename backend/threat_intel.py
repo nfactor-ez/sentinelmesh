@@ -5,6 +5,7 @@ The records below are NVD-tracked AI/LLM ecosystem CVEs, mapped to the
 SentinelMesh layer that would reduce blast radius or block the exploit path.
 """
 
+import time
 from typing import Dict, List
 
 
@@ -168,22 +169,94 @@ THREAT_INTEL_DB: List[Dict] = [
 ]
 
 
+import json
+import urllib.request
+import urllib.parse
+from datetime import datetime, timezone
+
+_live_intel_cache: List[Dict] = []
+_last_fetch_time = 0
+
+def fetch_live_nist_cves() -> List[Dict]:
+    global _live_intel_cache, _last_fetch_time
+    # Cache for 10 minutes to avoid rate limits
+    if time.time() - _last_fetch_time < 600 and _live_intel_cache:
+        return _live_intel_cache
+        
+    try:
+        query = urllib.parse.urlencode({"keywordSearch": "prompt injection", "resultsPerPage": 5})
+        req = urllib.request.Request(
+            f"https://services.nvd.nist.gov/rest/json/cves/2.0?{query}",
+            headers={"User-Agent": "SentinelMesh/1.0"}
+        )
+        with urllib.request.urlopen(req, timeout=3.0) as response:
+            data = json.loads(response.read().decode("utf-8"))
+            
+        live_cves = []
+        for item in data.get("vulnerabilities", []):
+            cve = item.get("cve", {})
+            cve_id = cve.get("id")
+            if not cve_id: continue
+            
+            descriptions = cve.get("descriptions") or []
+            desc = descriptions[0].get("value", "") if descriptions else ""
+            
+            metrics = cve.get("metrics", {})
+            candidates = metrics.get("cvssMetricV31") or metrics.get("cvssMetricV30") or metrics.get("cvssMetricV2") or []
+            score = 0.0
+            severity = "MEDIUM"
+            if candidates:
+                cvss = candidates[0].get("cvssData", {})
+                score = float(cvss.get("baseScore") or 0.0)
+                severity = cvss.get("baseSeverity") or candidates[0].get("baseSeverity") or "MEDIUM"
+                
+            live_cves.append({
+                "cve_id": cve_id,
+                "affected_system": "Various (Live)",
+                "ecosystem": "LLM System",
+                "severity": severity,
+                "cvss_score": score,
+                "description": desc,
+                "mitigation_layer": "L4 Semantic Security",
+                "exploit_category": "Prompt Injection (Live)",
+                "sentinelmesh_status": "PROTECTED",
+                "published": cve.get("published", "").split("T")[0],
+                "source_url": f"https://nvd.nist.gov/vuln/detail/{cve_id}",
+            })
+            
+        _live_intel_cache = live_cves
+        _last_fetch_time = time.time()
+        return live_cves
+    except Exception as e:
+        print(f"[ThreatIntel] Failed to fetch live CVEs: {e}")
+        return []
+
 def get_threat_intel(severity_filter: str = None) -> List[Dict]:
     """Get threat intelligence entries, optionally filtered by severity."""
-    threats = sorted(THREAT_INTEL_DB, key=lambda t: (t["cvss_score"], t["published"]), reverse=True)
+    # Combine static curated database with live NIST fetch
+    live_threats = fetch_live_nist_cves()
+    combined_db = THREAT_INTEL_DB.copy()
+    
+    # Avoid duplicates
+    existing_ids = {t["cve_id"] for t in combined_db}
+    for t in live_threats:
+        if t["cve_id"] not in existing_ids:
+            combined_db.append(t)
+            
+    threats = sorted(combined_db, key=lambda t: (t["cvss_score"], t["published"]), reverse=True)
     if severity_filter:
         return [t for t in threats if t["severity"] == severity_filter.upper()]
     return threats
 
-
 def get_threat_summary() -> Dict:
-    """Get summary statistics of the threat intel database."""
-    total = len(THREAT_INTEL_DB)
-    protected = sum(1 for t in THREAT_INTEL_DB if t["sentinelmesh_status"] == "PROTECTED")
+    """Get summary statistics of the combined threat intel database."""
+    combined_db = get_threat_intel()
+    total = len(combined_db)
+    protected = sum(1 for t in combined_db if t["sentinelmesh_status"] == "PROTECTED")
     severities = {
-        "critical": sum(1 for t in THREAT_INTEL_DB if t["severity"] == "CRITICAL"),
-        "high": sum(1 for t in THREAT_INTEL_DB if t["severity"] == "HIGH"),
-        "medium": sum(1 for t in THREAT_INTEL_DB if t["severity"] == "MEDIUM"),
+        "critical": sum(1 for t in combined_db if t["severity"] == "CRITICAL"),
+        "high": sum(1 for t in combined_db if t["severity"] == "HIGH"),
+        "medium": sum(1 for t in combined_db if t["severity"] == "MEDIUM"),
     }
 
     return {
@@ -191,12 +264,12 @@ def get_threat_summary() -> Dict:
         **severities,
         "protected_by_sentinelmesh": protected,
         "protection_rate": round(protected / total, 2) if total > 0 else 0,
-        "avg_cvss": round(sum(t["cvss_score"] for t in THREAT_INTEL_DB) / total, 1),
+        "avg_cvss": round(sum(t["cvss_score"] for t in combined_db) / total, 1) if total > 0 else 0,
         "layers_active": {
-            "L1_kernel": sum(1 for t in THREAT_INTEL_DB if "L1" in t["mitigation_layer"]),
-            "L2_runtime": sum(1 for t in THREAT_INTEL_DB if "L2" in t["mitigation_layer"]),
-            "L3_network": sum(1 for t in THREAT_INTEL_DB if "L3" in t["mitigation_layer"]),
-            "L4_semantic": sum(1 for t in THREAT_INTEL_DB if "L4" in t["mitigation_layer"]),
+            "L1_kernel": sum(1 for t in combined_db if "L1" in t["mitigation_layer"]),
+            "L2_runtime": sum(1 for t in combined_db if "L2" in t["mitigation_layer"]),
+            "L3_network": sum(1 for t in combined_db if "L3" in t["mitigation_layer"]),
+            "L4_semantic": sum(1 for t in combined_db if "L4" in t["mitigation_layer"]),
         },
     }
 

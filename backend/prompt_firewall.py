@@ -6,11 +6,11 @@ from typing import Dict, List
 from firewall_engine import _layer_a_keyword_scan, _layer_c_jailbreak_detector, _layer_d_policy_constraints
 
 PROMPT_PATTERNS = [
-    (r"ignore\s+(all\s+)?(previous|prior)\s+instructions", "instruction_override", 22),
-    (r"reveal\s+(your\s+)?(system\s+)?prompt", "system_prompt_extraction", 24),
-    (r"developer\s+mode|dan\s+mode|jailbreak", "policy_bypass", 26),
-    (r"pretend\s+you\s+are\s+(?:an?\s+)?(?:unrestricted|evil)", "role_manipulation", 20),
-    (r"hidden\s+prompt|inject\s+into\s+system", "hidden_injection", 22),
+    (r"ignore\s+(?:all\s+)?(?:previous|prior)\s+instructions", "instruction_override", 35),
+    (r"reveal\s+(?:your\s+)?(?:system\s+)?prompt", "system_prompt_extraction", 35),
+    (r"developer\s+mode|dan\s+mode|jailbreak|\b(?:aim|macha|based)\b", "policy_bypass", 35),
+    (r"pretend\s+you\s+are\s+(?:an?\s+)?(?:unrestricted|evil)", "role_manipulation", 30),
+    (r"hidden\s+prompt|inject\s+into\s+system|<system>", "hidden_injection", 30),
 ]
 
 

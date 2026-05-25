@@ -153,7 +153,8 @@ MESH_POLICY: Dict[str, List[str]] = {
                      "/api/verify-integrity", "/api/simulate", "/ws/live",
                      "/api/benchmark", "/api/benchmark/status", "/api/waves",
                      "/api/cilium/status", "/api/network/status",
-                     "/api/runtime/status", "/api/kernel/status"],
+                     "/api/runtime/status", "/api/kernel/status",
+                     "/api/layers/analyze"],
     "red-team-agent": ["/api/firewall", "/api/firewall/hf"],
     "monitor":      ["/api/stats", "/api/threat-feed"],
     "admin":        ["*"],   # wildcard

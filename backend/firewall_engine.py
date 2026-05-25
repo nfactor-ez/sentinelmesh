@@ -342,6 +342,8 @@ JAILBREAK_PATTERNS = [
             r"unrestricted\s+mode",
             r"god\s+mode",
             r"sudo\s+mode",
+            r"\b(?:aim|macha|based|b.a.s.e.d)\b",
+            r"always\s+intelligent\s+and\s+machiavellian",
         ],
         "score": 28,
     },
@@ -359,14 +361,15 @@ JAILBREAK_PATTERNS = [
     {
         "name": "system_override",
         "patterns": [
-            r"\[/?(?:INST|SYS|SYSTEM)\]",
+            r"\[/?(?:INST|SYS|SYSTEM|PROMPT)\]",
             r"<!--\s*SYSTEM",
-            r"<\|(?:im_start|system|endoftext)\|>",
+            r"<\|(?:im_start|system|endoftext|user|assistant)\|>",
+            r"<system>",
             r"system:\s*you\s+are\s+now",
             r"SYSTEM\s*(?:OVERRIDE|PROMPT)",
             r"debug\s+mode",
         ],
-        "score": 27,
+        "score": 35,
     },
     {
         "name": "authority_claim",
@@ -384,8 +387,10 @@ JAILBREAK_PATTERNS = [
             r"[0-9]{2,}(?:\s+[0-9]{2,}){3,}",  # number sequences (possible encoded text)
             r"(?:[a-zA-Z][\-_\s\.]{1,2}){5,}",  # spaced-out letters: h-a-c-k
             r"[a-z]+[0-9]+[a-z]+[0-9]+",  # l33tspeak: h4ck, b0mb
+            r"^[a-zA-Z0-9+/]+={0,2}$",  # base64
+            r"(?:\\x[0-9a-fA-F]{2})+",  # hex encoding
         ],
-        "score": 18,
+        "score": 25,
     },
     {
         "name": "privacy_device_access",
@@ -429,6 +434,8 @@ POLICY_HARD_BLOCK_PATTERNS: List[Tuple[str, str]] = [
     (r"(?:hack|break\s+into|unlock).{0,40}(?:gmail|google\s+account|icloud|apple\s+id)", "account_intrusion"),
     (r"sim\s+swap", "sim_swap_attack"),
     (r"without\s+(?:permission|consent|authorization)", "non_consensual_access"),
+    (r"ignore\s+(?:all\s+)?previous\s+instructions", "instruction_override"),
+    (r"reveal\s+(?:your\s+)?(?:system\s+)?prompt", "system_prompt_extraction"),
 ]
 
 
