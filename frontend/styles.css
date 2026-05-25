@@ -1768,3 +1768,94 @@ select:focus-visible {
   text-align: center;
   padding: 0 8px;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   LIVE FIREWALL — scoped upgrade (same theme)
+═══════════════════════════════════════════════════════════════ */
+.lf-input-wrap { position: relative; }
+.lf-terminal-input { font-family: "JetBrains Mono", monospace; font-size: 13px; }
+.lf-cursor {
+  position: absolute; right: 14px; bottom: 14px; width: 8px; height: 16px;
+  background: var(--coffee); animation: lfBlink 1s step-end infinite;
+}
+@keyframes lfBlink { 50% { opacity: 0; } }
+
+.lf-action-row {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 12px;
+}
+.lf-threat-badge {
+  font-size: 11px; font-weight: 800; letter-spacing: 0.06em;
+  padding: 6px 12px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--secondary); color: var(--muted);
+}
+.lf-badge-scan { border-color: rgba(214,158,46,0.4); color: var(--warning); background: rgba(214,158,46,0.08); }
+.lf-badge-block { border-color: rgba(197,48,48,0.35); color: var(--danger); background: rgba(197,48,48,0.08); }
+
+.lf-pipeline {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+@media (max-width: 900px) { .lf-pipeline { grid-template-columns: repeat(2, 1fr); } }
+
+.lf-stage {
+  border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px;
+  background: #fdfcfa; transition: border-color 0.25s ease, background 0.25s ease;
+}
+.lf-stage-active {
+  border-color: var(--coffee); background: #fff;
+  box-shadow: 0 4px 14px rgba(43, 33, 24, 0.06);
+}
+.lf-stage-done { border-color: rgba(47, 133, 90, 0.35); background: rgba(47, 133, 90, 0.04); }
+.lf-stage-alert { border-color: rgba(197, 48, 48, 0.4); background: rgba(197, 48, 48, 0.05); }
+.lf-stage-icon { font-size: 14px; font-weight: 800; margin-bottom: 4px; color: var(--muted); }
+.lf-stage-active .lf-stage-icon { color: var(--coffee); }
+.lf-stage-done .lf-stage-icon { color: var(--success); }
+.lf-stage-alert .lf-stage-icon { color: var(--danger); }
+.lf-stage-label { font-size: 11px; font-weight: 700; color: var(--text); line-height: 1.35; }
+
+.lf-mid-grid {
+  display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 16px;
+}
+@media (max-width: 960px) { .lf-mid-grid { grid-template-columns: 1fr; } }
+
+.lf-log-panel {
+  max-height: 220px; overflow-y: auto; font-family: "JetBrains Mono", monospace;
+  font-size: 11px; background: #1a120a; border-radius: 10px; padding: 12px;
+}
+.lf-log-line {
+  display: flex; gap: 8px; padding: 4px 0; color: #ccc;
+  animation: lfLogIn 0.28s ease;
+}
+@keyframes lfLogIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.lf-log-ts { color: #888; flex-shrink: 0; }
+.lf-log-lvl { font-weight: 700; flex-shrink: 0; }
+.lf-log-info .lf-log-lvl { color: #9ca3af; }
+.lf-log-scan .lf-log-lvl { color: #b08968; }
+.lf-log-warning .lf-log-lvl { color: #d69e2e; }
+.lf-log-alert .lf-log-lvl, .lf-log-blocked .lf-log-lvl { color: #f87171; }
+.lf-log-success .lf-log-lvl, .lf-log-secure .lf-log-lvl { color: #4ade80; }
+
+.lf-syscall-list { display: flex; flex-direction: column; gap: 8px; }
+.lf-syscall-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 10px; border-radius: 8px; background: var(--secondary);
+  border: 1px solid var(--border); font-size: 12px;
+}
+.lf-syscall-status { font-weight: 700; font-size: 11px; }
+.lf-syscall-block { color: var(--danger); }
+.lf-syscall-ok { color: var(--success); }
+
+.lf-verdict-panel {
+  border-radius: 14px; padding: 18px 20px; border: 1.5px solid var(--border);
+}
+.lf-verdict-blocked {
+  background: rgba(197, 48, 48, 0.06); border-color: rgba(197, 48, 48, 0.28);
+}
+.lf-verdict-allowed {
+  background: rgba(47, 133, 90, 0.06); border-color: rgba(47, 133, 90, 0.28);
+}
+.lf-verdict-title { font-size: 15px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+.lf-verdict-sub { font-size: 12px; color: var(--muted); font-weight: 600; }
+.lf-verdict-summary { font-size: 12px; color: var(--text); margin-top: 10px; line-height: 1.5; }
+.lf-mitigation { font-size: 11px; color: var(--muted); margin-top: 4px; font-weight: 600; }

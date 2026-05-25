@@ -30,7 +30,7 @@ from red_team_simulator import (
 from network_layer import network_layer_check, get_network_stats, flag_ip
 from runtime_layer import runtime_layer_check, get_runtime_stats
 from kernel_layer  import kernel_layer_check, get_kernel_stats
-from fastapi.middleware.cors import CORSMiddleware
+from risk_aggregator import run_security_pipeline, merge_pipeline_into_result
 
 
 # ══════════════════════════════════════════════════════════
@@ -169,6 +169,17 @@ def infer_attack_type(result: dict) -> str:
     if "ignore" in prompt and ("instruction" in prompt or "system" in prompt):
         return "Prompt Injection"
     return "Semantic Manipulation"
+
+
+async def _finalize_hf_result(result: dict, prompt: str, ml_result: Optional[dict] = None) -> dict:
+    """Run enterprise pipeline, merge telemetry, persist and broadcast."""
+    pipeline = await asyncio.to_thread(run_security_pipeline, prompt, ml_result)
+    merge_pipeline_into_result(result, pipeline)
+    enrich_event(result)
+    record_event(result)
+    audit_chain.add_entry(result)
+    await broadcast_event(result)
+    return result
 
 
 def enrich_event(result: dict) -> dict:
@@ -404,11 +415,7 @@ async def hf_firewall_endpoint(req: HFFirewallRequest):
             "hf_top_label": "blocked_by_network",
             "ml_provider": "none", "fallback": False,
         }
-        enrich_event(result)
-        record_event(result)
-        audit_chain.add_entry(result)
-        await broadcast_event(result)
-        return result
+        return await _finalize_hf_result(result, req.prompt)
 
     # ── L2 Runtime layer (< 2 ms) ──────────────────────────────────
     l2 = runtime_layer_check(req.prompt)
@@ -432,11 +439,7 @@ async def hf_firewall_endpoint(req: HFFirewallRequest):
             "hf_top_label": "blocked_by_runtime",
             "ml_provider": "none", "fallback": False,
         }
-        enrich_event(result)
-        record_event(result)
-        audit_chain.add_entry(result)
-        await broadcast_event(result)
-        return result
+        return await _finalize_hf_result(result, req.prompt)
 
     # ── L1 Kernel layer (< 1 ms) ───────────────────────────────────
     l1 = kernel_layer_check(req.prompt)
@@ -460,11 +463,7 @@ async def hf_firewall_endpoint(req: HFFirewallRequest):
             "hf_top_label": "blocked_by_kernel",
             "ml_provider": "none", "fallback": False,
         }
-        enrich_event(result)
-        record_event(result)
-        audit_chain.add_entry(result)
-        await broadcast_event(result)
-        return result
+        return await _finalize_hf_result(result, req.prompt)
 
     # ── L4 Semantic layer — HuggingFace + local ML ─────────────────
     token    = os.getenv("REACT_APP_HF_TOKEN") or os.getenv("HF_TOKEN")
@@ -498,10 +497,7 @@ async def hf_firewall_endpoint(req: HFFirewallRequest):
     result["block_layer"]   = "L4" if result.get("blocked") else None
     result["layer_results"] = {"L3": l3, "L2": l2, "L1": l1}
 
-    record_event(result)
-    audit_chain.add_entry(result)
-    await broadcast_event(result)
-    return result
+    return await _finalize_hf_result(result, req.prompt, ml_result=result)
 
 
 # ── POST /api/simulate ──
