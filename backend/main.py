@@ -30,6 +30,8 @@ from red_team_simulator import (
 from network_layer import network_layer_check, get_network_stats, flag_ip
 from runtime_layer import runtime_layer_check, get_runtime_stats
 from kernel_layer  import kernel_layer_check, get_kernel_stats
+from fastapi.middleware.cors import CORSMiddleware
+
 
 # ══════════════════════════════════════════════════════════
 # App Initialization
@@ -267,7 +269,7 @@ def parse_hf_result(prompt: str, payload: dict, latency_ms: float) -> Dict:
         "jailbreak_score": risk if top_label in {"jailbreak attempt", "prompt injection"} else 0.0,
         "top_threat_similarity": round(top_score, 4),
         "matched_jailbreak_pattern": top_label if top_label in {"jailbreak attempt", "prompt injection"} else None,
-        "blocked": classification in {"HARMFUL", "CRITICAL"},
+        "blocked": classification in {"SUSPICIOUS", "HARMFUL", "CRITICAL"},
         "processing_time_ms": round(latency_ms, 1),
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "hf_labels": labels,

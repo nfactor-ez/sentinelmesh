@@ -131,6 +131,21 @@ CODE_INJECTION_RULES: List[Dict] = [
         ],
         "description": "LDAP injection attempt",
     },
+    {
+        "name": "privacy_device_access",
+        "severity": "CRITICAL",
+        "score": 38,
+        "patterns": [
+            r"(?:want|need|help)\s+(?:to\s+)?access\s+(?:my|their|his|her|personal|someone)",
+            r"access\s+(?:my|their|his|her|personal|a\s+person'?s?)\s+(?:mobile|phone|device|cell)",
+            r"personal\s+mobile",
+            r"(?:read|track|monitor|spy).{0,40}(?:phone|mobile|messages?|sms)",
+            r"(?:gmail|google\s+account|icloud).{0,30}(?:hack|steal|bypass|password)",
+            r"without\s+(?:permission|consent|authorization)",
+            r"sim\s+swap",
+        ],
+        "description": "Unauthorized personal device / account access (Google safety policy)",
+    },
 ]
 
 # ═══════════════════════════════════════════════════════════
