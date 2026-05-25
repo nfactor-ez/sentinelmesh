@@ -4,8 +4,23 @@ const motionApi = window.Motion || window.framerMotion || {};
 const MotionDiv = motionApi.motion?.div || "div";
 const MotionTr  = motionApi.motion?.tr  || "tr";
 
-const API = window.location.origin;
-const WS  = `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/ws/live`;
+const API = (() => {
+  const { hostname, port } = window.location;
+  const devPorts = ["5173", "5500", "4173", "3000", "8080"];
+  if ((hostname === "localhost" || hostname === "127.0.0.1") && devPorts.includes(port)) {
+    return "http://localhost:8000";
+  }
+  return window.location.origin;
+})();
+const WS = (() => {
+  const { hostname, port } = window.location;
+  const devPorts = ["5173", "5500", "4173", "3000", "8080"];
+  if ((hostname === "localhost" || hostname === "127.0.0.1") && devPorts.includes(port)) {
+    return "ws://localhost:8000/ws/live";
+  }
+  const proto = window.location.protocol === "https:" ? "wss" : "ws";
+  return `${proto}://${window.location.host}/ws/live`;
+})();
 
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 const TABS = [
