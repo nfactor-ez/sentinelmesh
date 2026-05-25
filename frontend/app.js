@@ -665,6 +665,16 @@ function ThreatIntelTab({ liveCves, nvdLoading, refreshNvd, nvdLastFetched }) {
     return acc;
   }, {});
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const totalPages = Math.max(1, Math.ceil(threats.length / itemsPerPage));
+  
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(1);
+  }, [threats.length, currentPage, totalPages]);
+
+  const currentThreats = threats.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   return (
     <div className="tab-content">
       <section className="fw-section card">
@@ -721,7 +731,7 @@ function ThreatIntelTab({ liveCves, nvdLoading, refreshNvd, nvdLastFetched }) {
                 </tr>
               </thead>
               <tbody>
-                {threats.map(threat => {
+                {currentThreats.map(threat => {
                   const layerStyle = getLayerStyle(threat.sentinelmesh_layer);
                   return (
                     <tr key={threat.cve_id}>
@@ -757,6 +767,48 @@ function ThreatIntelTab({ liveCves, nvdLoading, refreshNvd, nvdLastFetched }) {
                 })}
               </tbody>
             </table>
+            
+            {/* STANDARD PAGINATION */}
+            {totalPages > 1 && (
+              <div className="standard-pagination-container">
+                <button 
+                  className="page-nav-btn" 
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                >
+                  Previous
+                </button>
+                <div className="page-numbers">
+                  {Array.from({ length: totalPages }).map((_, idx) => {
+                    const pageNum = idx + 1;
+                    // simple sliding window if totalPages > 7
+                    if (totalPages > 7) {
+                      if (pageNum !== 1 && pageNum !== totalPages && Math.abs(currentPage - pageNum) > 1) {
+                         if (pageNum === 2 || pageNum === totalPages - 1) return <span key={pageNum} className="page-ellipsis">...</span>;
+                         return null; // hide
+                      }
+                    }
+                    return (
+                      <button 
+                        key={pageNum} 
+                        className={classNames("page-num-btn", currentPage === pageNum ? "active" : "")}
+                        onClick={() => setCurrentPage(pageNum)}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button 
+                  className="page-nav-btn" 
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                >
+                  Next
+                </button>
+              </div>
+            )}
+
           </div>
         )}
       </section>
