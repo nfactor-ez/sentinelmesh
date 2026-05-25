@@ -1,11 +1,26 @@
 // ─── Core React hooks ────────────────────────────────────────────────────────
+// ─── Core React hooks ────────────────────────────────────────────────────────
 const { useCallback, useEffect, useMemo, useRef, useState } = React;
+
 const motionApi = window.Motion || window.framerMotion || {};
 const MotionDiv = motionApi.motion?.div || "div";
 const MotionTr  = motionApi.motion?.tr  || "tr";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
-const WS = import.meta.env.VITE_WS_URL || "ws://localhost:8000/ws/live";
+// ─── API CONFIG ──────────────────────────────────────────────────────────────
+const API =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1"
+    ? "http://localhost:8000"
+    : "https://sentinelmesh-backend.onrender.com";
+
+const WS =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1"
+    ? "ws://localhost:8000/ws/live"
+    : "wss://sentinelmesh-backend.onrender.com/ws/live";
+
+console.log("API:", API);
+console.log("WS:", WS);
 
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 const TABS = [
